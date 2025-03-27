@@ -3,9 +3,8 @@ from copy import deepcopy
 
 import numpy as np
 
+# modified by CH
 from tests.common import TEST_CAMERA
-# CH Note: "tests." may need to be temporarily removed from "tests.common" to make this file
-# run on its own, as seen in the next line:
 # from common import TEST_CAMERA
 
 import src.camera_utils as camera_utils
