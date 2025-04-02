@@ -36,7 +36,6 @@ def project_world_point_to_image(camera: Camera, point: np.ndarray) -> np.ndarra
     u = x + camera.cx
     v = y + camera.cy
     return np.array([u, v])
-    # raise NotImplementedError()
 
 
 def compute_image_footprint_on_surface(camera: Camera, distance_from_surface: float) -> np.ndarray:

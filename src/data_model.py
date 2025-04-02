@@ -19,7 +19,6 @@ class Camera:
     sensor_size_y_mm: float
     image_size_x_px: float
     image_size_y_px: float
-    # pass
 
 
 @dataclass
