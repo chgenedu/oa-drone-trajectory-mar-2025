@@ -30,7 +30,6 @@ def project_world_point_to_image(camera: Camera, point: np.ndarray) -> np.ndarra
     Returns:
         np.ndarray: [u, v] pixel coordinates corresponding to the point.
     """
-    # added by CH
     x = camera.fx * point[0] / point[2]
     y = camera.fy * point[1] / point[2]
     u = x + camera.cx
@@ -48,7 +47,6 @@ def compute_image_footprint_on_surface(camera: Camera, distance_from_surface: fl
     Returns:
         np.ndarray: [footprint_x, footprint_y] in meters.
     """
-    # added by CH
     # reversing the calculation in project_world_point_to_image() for an image,
     # using the two opposing corners of the image.
     # (u0, v0) is the (x, y) coordinate in px of the upper left corner of the image.
@@ -76,7 +74,6 @@ def compute_ground_sampling_distance(camera: Camera, distance_from_surface: floa
     Returns:
         float: the GSD in meters (smaller among x and y directions).
     """
-    # added by CH
     # footprint along each direction per pixel is the ground sampling distance in that direction
     footprint = compute_image_footprint_on_surface(camera, distance_from_surface)
 
@@ -88,7 +85,6 @@ def compute_ground_sampling_distance(camera: Camera, distance_from_surface: floa
     return min(gsd_x, gsd_y)
 
 
-# added by CH
 def reproject_image_point_to_world(camera: Camera,
                                    distance_from_surface: float,
                                    point: np.ndarray) -> np.ndarray:
@@ -97,7 +93,7 @@ def reproject_image_point_to_world(camera: Camera,
     Args:
         camera (Camera): the camera model.
         distance_from_surface (float): distance from the surface (in m).
-        point (float): image point [x, y] (in px).
+        point (float): image point [u, v] (in px).
 
     Returns:
         np.ndarray: world point [x, y, z] (in m).

@@ -10,7 +10,6 @@ class Camera:
     - https://github.com/colmap/colmap/blob/3f75f71310fdec803ab06be84a16cee5032d8e0d/src/colmap/sensor/models.h#L220
     - https://en.wikipedia.org/wiki/Pinhole_camera_model
     """
-    # added by CH
     fx: float
     fy: float
     cx: float
@@ -26,7 +25,6 @@ class DatasetSpec:
     """
     Data model for specifications of an image dataset.
     """
-    # added by CH
     overlap: float
     sidelap: float
     height: float
