@@ -15,8 +15,8 @@ def compute_distance_between_images(camera: Camera, dataset_spec: DatasetSpec) -
         dataset_spec (DatasetSpec): user specification for the dataset.
 
     Returns:
-        float: The distance between images in the horizontal direction.
-        float: The distance between images in the vertical direction.
+        float: The distance between images in the horizontal direction. (in meters)
+        float: The distance between images in the vertical direction. (in meters)
     """
     [footprint_x, footprint_y] = compute_image_footprint_on_surface(camera, dataset_spec.height)
     horizontal_distance = (1 - dataset_spec.overlap) * footprint_x
@@ -31,18 +31,17 @@ def compute_distance_between_images_with_angle(camera: Camera,
                                                angle_deg_x: float,
                                                angle_deg_y: float) -> np.ndarray:
     """Compute the distance between images in the horizontal and vertical directions for specified overlap and sidelap,
-    and camera angle.
-    We assume that we only need to adjust the footprint based on the camera angle.
+    and camera angles.
 
     Args:
         camera (Camera): Camera model used for image capture.
         dataset_spec (DatasetSpec): user specification for the dataset.
-        angle_deg_x (float): camera's gimbal angle in x direction (in degrees)
-        angle_deg_y (float): camera's gimbal angle in y direction (in degrees)
+        angle_deg_x (float): camera's gimbal angle toward the x direction (in degrees)
+        angle_deg_y (float): camera's gimbal angle toward the y direction (in degrees)
 
     Returns:
-        float: The distance between images in the horizontal direction.
-        float: The distance between images in the vertical direction.
+        float: The distance between images in the horizontal direction. (in meters)
+        float: The distance between images in the vertical direction. (in meters)
     """
     [footprint_x, footprint_y] = compute_image_footprint_on_surface(camera, dataset_spec.height)
 
