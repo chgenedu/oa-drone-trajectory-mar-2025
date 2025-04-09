@@ -53,16 +53,26 @@ def compute_distance_between_images_with_angle(camera: Camera,
     [fov_deg_x, fov_deg_y] = fov(camera)
     [fov_x, fov_y] = [math.radians(fov_deg_x), math.radians(fov_deg_y)]
 
-    # If camera_angle >= 0, We have two cases:
-    # 1: If camera_angle >= FOV/2,
-    # then footprint = (tan(camera_angle + FOV/2) - tan(camera_angle - FOV/2)) * height
-    # 2: If 0 <= camera_angle < FOV/2,
-    # then footprint = (tan(camera_angle + FOV/2) + tan(FOV/2 - camera_angle)) * height
-    # If camera angle < 0, we still get the same equations since tan() is an odd function.
-    # Then we use wolframalpha.com to simplify these functions and we found out that
-    # both of them can be simplified to the same form, regardless of whether
-    # the camera_angle is greater than FOV/2:
-    # footprint = 2 * sin(FOV) / (cos(FOV) + cos(2*camera_angle))
+    # Below is an explanation of the calculation formula for the horizontal footprint.
+    # The formula for vertical footprint is analogous.
+    #
+    # If camera_angle_x >= 0, We have two cases:
+    # If camera_angle_x >= FOV/2,
+    # then horizontal_footprint = (tan(camera_angle_x+FOV/2) - tan(camera_angle_x-FOV/2)) * height
+    # If 0 <= camera_angle_x < FOV/2,
+    # then horizontal_footprint = (tan(camera_angle_x+FOV/2) + tan(FOV/2-camera_angle_x)) * height
+    # But tan() is an odd function. By using this fact, we know that tan(FOV/2 - camera_angle_x)
+    # is the same as -tan(camera_angle_x - FOV/2), which means that the two formulas above
+    # are the same.
+    #
+    # Furthermore, by using the fact that tan() is an odd function again,
+    # we know that when camera angle_x < 0, we still get the same equations.
+    # So either of the above equations would work whenever camera_angle_x satisfies
+    # the condition that FOV/2 + abs(camera_angle_x) < 90 degrees.
+    #
+    # We can use https://www.wolframalpha.com/ to manipulate the above equation into the form below,
+    # which seems a bit neater:
+    # horizontal_footprint = 2 * sin(FOV) / (cos(FOV) + cos(2*camera_angle_x)) * height
 
     footprint_x = 2*math.sin(fov_x) / (math.cos(fov_x) + math.cos(2*angle_x)) * dataset_spec.height
     footprint_y = 2*math.sin(fov_y) / (math.cos(fov_y) + math.cos(2*angle_y)) * dataset_spec.height
