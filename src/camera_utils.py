@@ -1,6 +1,7 @@
 """Utility functions for the camera model.
 """
 import numpy as np
+import math
 
 from src.data_model import Camera
 
@@ -107,3 +108,21 @@ def reproject_image_point_to_world(camera: Camera,
     y = (v - camera.cy) / camera.fy * distance_from_surface
 
     return np.array([x, y, distance_from_surface])
+
+
+# This is a helper function created for Week 4 Bonus function
+# compute_distance_between_images_with_angle() in src/plan_computation.py.
+# This function calculates the field of view of a camera.
+def fov(camera: Camera) -> np.ndarray:
+    """Compute the field of view of a camera.
+
+    Args:
+        camera (Camera): Camera model used for image capture.
+
+    Returns:
+        float: The field of view of the camera in the horizontal (x) direction (in degrees)
+        float: The field of view of the camera in the vertical (y) direction (in degrees)
+    """
+    fov_x = 2 * math.atan((camera.image_size_x_px/2) / camera.fx)
+    fov_y = 2 * math.atan((camera.image_size_y_px/2) / camera.fy)
+    return np.array([math.degrees(fov_x), math.degrees(fov_y)])
