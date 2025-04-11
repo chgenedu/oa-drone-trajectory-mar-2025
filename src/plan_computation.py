@@ -4,7 +4,7 @@ import math
 import numpy as np
 
 from src.data_model import Camera, DatasetSpec, Waypoint
-from src.camera_utils import compute_image_footprint_on_surface, compute_ground_sampling_distance
+from src.camera_utils import compute_image_footprint_on_surface, compute_ground_sampling_distance, fov
 
 
 def compute_distance_between_images(camera: Camera, dataset_spec: DatasetSpec) -> np.ndarray:
@@ -70,33 +70,16 @@ def compute_distance_between_images_with_angle(camera: Camera,
     # So either of the above equations would work whenever camera_angle_x satisfies
     # the condition that FOV/2 + abs(camera_angle_x) < 90 degrees.
     #
-    # We can use https://www.wolframalpha.com/ to manipulate the above equation into the form below,
-    # which seems a bit neater:
-    # horizontal_footprint = 2 * sin(FOV) / (cos(FOV) + cos(2*camera_angle_x)) * height
+    # Conclusion (after a slight rearrangement):
+    # Assuming FOV/2 + abs(camera_angle_x) < 90 degrees, then
+    # horizontal_footprint = (tan(FOV/2+camera_angle_x) + tan(FOV/2-camera_angle_x)) * height
 
-    footprint_x = 2*math.sin(fov_x) / (math.cos(fov_x) + math.cos(2*angle_x)) * dataset_spec.height
-    footprint_y = 2*math.sin(fov_y) / (math.cos(fov_y) + math.cos(2*angle_y)) * dataset_spec.height
+    footprint_x = (math.tan(fov_x/2 + angle_x) + math.tan(fov_x/2 - angle_x)) * dataset_spec.height
+    footprint_y = (math.tan(fov_y/2 + angle_y) + math.tan(fov_y/2 - angle_y)) * dataset_spec.height
 
     horizontal_distance = (1 - dataset_spec.overlap) * footprint_x
     vertical_distance = (1 - dataset_spec.sidelap) * footprint_y
     return np.array([horizontal_distance, vertical_distance])
-
-
-# Helper function for compute_distance_between_images_with_angle()
-# calculate the field of view of a camera
-def fov(camera: Camera) -> np.ndarray:
-    """Compute the field of view of a camera.
-
-    Args:
-        camera (Camera): Camera model used for image capture.
-
-    Returns:
-        float: The field of view of the camera in the horizontal (x) direction (in degrees)
-        float: The field of view of the camera in the vertical (y) direction (in degrees)
-    """
-    fov_x = 2 * math.atan((camera.image_size_x_px/2) / camera.fx)
-    fov_y = 2 * math.atan((camera.image_size_y_px/2) / camera.fy)
-    return np.array([math.degrees(fov_x), math.degrees(fov_y)])
 
 
 def compute_speed_during_photo_capture(camera: Camera, dataset_spec: DatasetSpec, allowed_movement_px: float = 1) -> float:
