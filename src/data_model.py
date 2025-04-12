@@ -10,6 +10,14 @@ class Camera:
     - https://github.com/colmap/colmap/blob/3f75f71310fdec803ab06be84a16cee5032d8e0d/src/colmap/sensor/models.h#L220
     - https://en.wikipedia.org/wiki/Pinhole_camera_model
     """
+    # fx: focal length along x axis (in pixels)
+    # fy: focal length along y axis (in pixels)
+    # cx: optical center of the image along the x axis (in pixels)
+    # cy: optical center of the image along the y axis (in pixels)
+    # sensor_size_x_mm: Size of the sensor along the x axis (in mm)
+    # sensor_size_y_mm: Size of the sensor along the y axis (in mm)
+    # image_size_x_px: Number of pixels in the image along the x axis
+    # image_size_y_px: Number of pixels in the image along the y axis
     fx: float
     fy: float
     cx: float
@@ -25,6 +33,12 @@ class DatasetSpec:
     """
     Data model for specifications of an image dataset.
     """
+    # overlap: the ratio (in 0 to 1) of scene shared between two consecutive images.
+    # sidelap: the ratio (in 0 to 1) of scene shared between two images in adjacent rows.
+    # height: the height of the scan above the ground (in meters).
+    # scan_dimension_x: the horizontal size of the rectangle to be scanned
+    # scan_dimension_y: the vertical size of the rectangle to be scanned
+    # exposure_time_ms: the exposure time for each image (in milliseconds).
     overlap: float
     sidelap: float
     height: float
