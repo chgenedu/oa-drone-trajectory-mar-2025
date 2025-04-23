@@ -91,9 +91,12 @@ def compute_speed_during_photo_capture(camera: Camera, dataset_spec: DatasetSpec
         allowed_movement_px (float, optional): The maximum allowed movement in pixels. Defaults to 1 px.
 
     Returns:
-        float: The speed at which the drone should move during photo capture.
+        float: The speed at which the drone should move during photo capture, in meters per second.
     """
-    raise NotImplementedError()
+    # distance during active photo capture (meters)
+    distance = compute_ground_sampling_distance(camera, dataset_spec.height) * allowed_movement_px
+    time = dataset_spec.exposure_time_ms * 0.001 # exposure time (seconds)
+    return distance / time
 
 
 def generate_photo_plan_on_grid(camera: Camera, dataset_spec: DatasetSpec) -> T.List[Waypoint]:
