@@ -52,4 +52,15 @@ class Waypoint:
     """
     Waypoints are positions where the drone should fly to and capture a photo.
     """
-    pass
+    # x: position of the camera (meters)
+    # y: position of the camera (meters)
+    # speed: movement speed of the camera itself (meters per second)
+    # camera_angle_x_deg: the camera's gimbal angle along the horizontal direction
+    #   as measured from the perpendicular line between the camera and the ground.
+    # camera_angle_y_deg: the camera's gimbal angle along the vertical direction
+    #   as measured from the perpendicular line between the camera and the ground.
+    x: float
+    y: float
+    speed: float
+    camera_angle_x_deg: float = 0
+    camera_angle_y_deg: float = 0
