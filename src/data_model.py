@@ -54,13 +54,47 @@ class Waypoint:
     """
     # x: position of the camera (meters)
     # y: position of the camera (meters)
+    # z: position of the camera (meters)
     # speed: movement speed of the camera itself (meters per second)
-    # camera_angle_x_deg: the camera's gimbal angle along the horizontal direction
+    # camera_angle_x_deg: the camera's gimbal angle along the world's fixed horizontal direction
     #   as measured from the perpendicular line between the camera and the ground.
-    # camera_angle_y_deg: the camera's gimbal angle along the vertical direction
+    # camera_angle_y_deg: the camera's gimbal angle along the world's fixed vertical direction
     #   as measured from the perpendicular line between the camera and the ground.
     x: float
     y: float
+    z: float
     speed: float
     camera_angle_x_deg: float = 0
     camera_angle_y_deg: float = 0
+
+
+@dataclass
+class Coordinate:
+    """
+    Coordinates are positions of a point
+    """
+    # x: position of a point (meters)
+    # y: position of a point (meters)
+    # z: position of a point (meters)
+    x: float
+    y: float
+    z: float
+
+
+@dataclass
+class FootprintCoord:
+    """
+    Information about a the four corners of the footprint of a photo area.
+    The coordinate is relative to the camera's coordinate.
+    """
+    # pt_1: corner 1 coordinate (meters)
+    # pt_2: corner 2 coordinate (meters)
+    # pt_3: corner 3 coordinate (meters)
+    # pt_4: corner 4 coordinate (meters)
+    # pt_c: coordinate of the point where the camera is aiming at (meters)
+    # Note: all coordinates are relative to the camera's current coordinate.
+    pt_1: Coordinate
+    pt_2: Coordinate
+    pt_3: Coordinate
+    pt_4: Coordinate
+    pt_c: Coordinate
