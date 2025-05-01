@@ -98,8 +98,7 @@ def compute_image_footprint_on_surface_coord(camera: Camera,
     at a given distance from the surface.
 
     It is assumed that only one of angle_x_deg and angle_y_deg may be non-zero.
-    If both are non-zero, then only angle_x_deg will be used, and angle_y_deg will be 
-    ignored as if it is set to zero.
+    If both are non-zero, then an exception will be raised.
 
     Args:
         camera (Camera): the camera model.
@@ -116,20 +115,13 @@ def compute_image_footprint_on_surface_coord(camera: Camera,
         But with non-zero gimbal angle, there will be a distortion so the footprint may not actually 
         be rectangular in reality.
     """
+    # Check to make sure that at most one angle is non-zero
+    if angle_x_deg != 0 and angle_y_deg != 0:
+        raise NotImplementedError("Not Implemented: Currenly only one of the camera angles may be non-zero.")
 
     # convert to radians
     angle_x = math.radians(angle_x_deg) # convert deg to rad
     angle_y = math.radians(angle_y_deg) # convert deg to rad
-
-    # Check to make sure that at most one angle is non-zero
-    # If both are non-zero, then set angle_y = 0.
-    try:
-        if angle_x_deg != 0 and angle_y_deg != 0:
-            raise NotImplementedError("Not Implemented: Currenly only one of the camera angles may be non-zero.")
-    except NotImplementedError as e:
-        print(e)
-        print ("Ignoring angle_y in the calculating footprint coordinates.")
-        angle_y = 0
 
     # fov_x is field of view in the x direction.
     [fov_deg_x, fov_deg_y] = fov(camera)
@@ -147,13 +139,18 @@ def compute_image_footprint_on_surface_coord(camera: Camera,
     # math.tan(angle_x) * h
 
     h = distance_from_surface
-    point_1 = Coordinate(math.tan(angle_x - fov_x/2)*h, math.tan(angle_y - fov_y/2)*h, -h)
-    point_2 = Coordinate(math.tan(angle_x + fov_x/2)*h, math.tan(angle_y + fov_y/2)*h, -h)
-    point_3 = Coordinate(math.tan(angle_x - fov_x/2)*h, math.tan(angle_y + fov_y/2)*h, -h)
-    point_4 = Coordinate(math.tan(angle_x + fov_x/2)*h, math.tan(angle_y - fov_y/2)*h, -h)
+    # Bottom Left corner of the footprint
+    point_bottomleft = Coordinate(math.tan(angle_x - fov_x/2)*h, math.tan(angle_y - fov_y/2)*h, -h)
+    # Top Right corner
+    point_topright = Coordinate(math.tan(angle_x + fov_x/2)*h, math.tan(angle_y + fov_y/2)*h, -h)
+    # Top Left corner
+    point_topleft = Coordinate(math.tan(angle_x - fov_x/2)*h, math.tan(angle_y + fov_y/2)*h, -h)
+    # Bottom Right corner
+    point_bottomright = Coordinate(math.tan(angle_x + fov_x/2)*h, math.tan(angle_y - fov_y/2)*h, -h)
+    # The point where camera is aiming at
     point_c = Coordinate(math.tan(angle_x)*h, math.tan(angle_y)*h, -h)
 
-    return FootprintCoord(point_1, point_2, point_3, point_4, point_c)
+    return FootprintCoord(point_bottomleft, point_topright, point_topleft, point_bottomright, point_c)
 
 
 def compute_ground_sampling_distance(camera: Camera, distance_from_surface: float) -> float:

@@ -77,9 +77,9 @@ def compute_speed_during_photo_capture(camera: Camera, dataset_spec: DatasetSpec
 
 def compute_speed_during_photo_capture_with_angle(camera: Camera,
                                                   dataset_spec: DatasetSpec,
-                                                  allowed_movement_px: float = 1,
                                                   angle_x_deg: float = 0,
-                                                  angle_y_deg: float = 0
+                                                  angle_y_deg: float = 0,
+                                                  allowed_movement_px: float = 1,
                                                   ) -> float:
     """Compute the speed of drone during an active photo capture to prevent 
     more than 1px of motion blur. This function accounts for non-zero camera angles,
@@ -123,15 +123,17 @@ def compute_speed_during_photo_capture_with_angle(camera: Camera,
 def generate_photo_plan_on_grid(camera: Camera, 
                                 dataset_spec: DatasetSpec,
                                 angle_x_deg: float = 0,
-                                angle_y_deg: float = 0
+                                angle_y_deg: float = 0,
+                                allowed_movement_px: float = 1,
                                 ) -> T.List[Waypoint]:
     """Generate the complete photo plan as a list of waypoints in a lawn-mower pattern.
 
     Args:
         camera (Camera): Camera model used for image capture.
         dataset_spec (DatasetSpec): user specification for the dataset.
-        angle_x_deg (float): camera's gimbal angle toward the x direction (in degrees)
-        angle_y_deg (float): camera's gimbal angle toward the y direction (in degrees)
+        angle_x_deg (float, optional): camera's gimbal angle toward the x direction (in degrees)
+        angle_y_deg (float, optional): camera's gimbal angle toward the y direction (in degrees)
+        allowed_movement_px (float, optional): The maximum allowed movement in pixels. Defaults to 1 px.
 
     Returns:
         List[Waypoint]: scan plan as a list of waypoints.
@@ -143,15 +145,15 @@ def generate_photo_plan_on_grid(camera: Camera,
     max_computed_distances = compute_distance_between_images_with_angle(camera, dataset_spec,
                                                                             angle_x_deg,
                                                                             angle_y_deg)
-    # assume allowed_movment_px = 1
+    # default allowed_movment_px = 1
     if angle_x_deg == 0 and angle_y_deg == 0:
-        computed_speed = compute_speed_during_photo_capture(camera, dataset_spec, allowed_movement_px=1)
+        computed_speed = compute_speed_during_photo_capture(camera, dataset_spec, allowed_movement_px)
     else:
         computed_speed = compute_speed_during_photo_capture_with_angle(camera,
                                                                        dataset_spec,
-                                                                       allowed_movement_px=1,
                                                                        angle_x_deg=angle_x_deg,
-                                                                       angle_y_deg=angle_y_deg)
+                                                                       angle_y_deg=angle_y_deg,
+                                                                       allowed_movement_px=allowed_movement_px)
 
     # calculate the number of photos in each direction
     # we need at least two waypoints in each direction at the start and end point of the scan area
