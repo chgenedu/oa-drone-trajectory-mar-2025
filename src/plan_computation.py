@@ -103,18 +103,6 @@ def compute_speed_during_photo_capture_with_angle(camera: Camera,
     
     # distance travelled during active photo capture with angle
     distance = compute_ground_sampling_distance(camera, distance_to_footprint) * allowed_movement_px
-    
-    ### Debugging info
-    # print("*****************")
-    # print(f"height: {dataset_spec.height}")
-    # print(f"distance_to_footprint: {distance_to_footprint}")
-    # print(f"distance travelled during active photo capture with angle: {distance}")
-
-    ### FOR ERROR CHECKING
-    ### use this if both angles are zero
-    ### distance travelled during active photo capture (meters) if both angles are zero
-    # distance_without_angle = compute_ground_sampling_distance(camera, dataset_spec.height) * allowed_movement_px
-    # print(f"distance travelled during active photo capture without angle: {distance_without_angle}")
 
     time = dataset_spec.exposure_time_ms * 0.001 # exposure time (seconds)
     return distance / time

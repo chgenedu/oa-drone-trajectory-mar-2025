@@ -4,13 +4,11 @@
 import typing as T
 import random
 
-# import colorsys
 import plotly.graph_objects as go
 import plotly.express as px
 
 from src.data_model import Camera, DatasetSpec, Waypoint
 from src.camera_utils import compute_image_footprint_on_surface_coord
-# from src.camera_utils import compute_image_footprint_on_surface_with_angle
 
 def plot_photo_plan(photo_plans: T.List[Waypoint]) -> go.Figure:
     """Plot the photo plan on a 2D grid.
