@@ -4,7 +4,12 @@ import math
 import numpy as np
 
 from src.data_model import Camera, DatasetSpec, Waypoint
-from src.camera_utils import compute_image_footprint_on_surface, compute_ground_sampling_distance, fov
+from src.camera_utils import compute_image_footprint_on_surface, compute_ground_sampling_distance
+
+# additional imports
+from src.camera_utils import (compute_image_footprint_on_surface_with_angle,
+                              compute_image_footprint_on_surface_coord,
+                              closest_distance_to_footprint)
 
 
 def compute_distance_between_images(camera: Camera, dataset_spec: DatasetSpec) -> np.ndarray:
@@ -26,56 +31,27 @@ def compute_distance_between_images(camera: Camera, dataset_spec: DatasetSpec) -
 
 # Bonus question for week 4
 # Assume the camera's field of view/2 + angle_deg <= 90 degrees
-def compute_distance_between_images_with_angle(camera: Camera, 
+def compute_distance_between_images_with_angle(camera: Camera,
                                                dataset_spec: DatasetSpec,
-                                               angle_deg_x: float,
-                                               angle_deg_y: float) -> np.ndarray:
-    """Compute the distance between images in the horizontal and vertical directions for specified overlap and sidelap,
-    and camera angles.
+                                               angle_x_deg: float,
+                                               angle_y_deg: float
+                                               ) -> np.ndarray:
+    """Compute the distance between images in the horizontal and vertical directions 
+    for specified overlap and sidelap, and camera angles.
 
     Args:
         camera (Camera): Camera model used for image capture.
         dataset_spec (DatasetSpec): user specification for the dataset.
-        angle_deg_x (float): camera's gimbal angle toward the x direction (in degrees)
-        angle_deg_y (float): camera's gimbal angle toward the y direction (in degrees)
+        angle_x_deg (float): camera's gimbal angle toward the x direction (in degrees)
+        angle_y_deg (float): camera's gimbal angle toward the y direction (in degrees)
 
     Returns:
         float: The distance between images in the horizontal direction. (in meters)
         float: The distance between images in the vertical direction. (in meters)
     """
-    [footprint_x, footprint_y] = compute_image_footprint_on_surface(camera, dataset_spec.height)
 
-    angle_x = math.radians(angle_deg_x) # convert deg to rad
-    angle_y = math.radians(angle_deg_y) # convert deg to rad
-
-    # fov_x is field of view in the x direction.
-    # unused:  fov_x = 2 * math.atan((camera.image_size_x_px/2) / camera.fx)
-    [fov_deg_x, fov_deg_y] = fov(camera)
-    [fov_x, fov_y] = [math.radians(fov_deg_x), math.radians(fov_deg_y)]
-
-    # Below is an explanation of the calculation formula for the horizontal footprint.
-    # The formula for vertical footprint is analogous.
-    #
-    # If camera_angle_x >= 0, We have two cases:
-    # If camera_angle_x >= FOV/2,
-    # then horizontal_footprint = (tan(camera_angle_x+FOV/2) - tan(camera_angle_x-FOV/2)) * height
-    # If 0 <= camera_angle_x < FOV/2,
-    # then horizontal_footprint = (tan(camera_angle_x+FOV/2) + tan(FOV/2-camera_angle_x)) * height
-    # But tan() is an odd function. By using this fact, we know that tan(FOV/2 - camera_angle_x)
-    # is the same as -tan(camera_angle_x - FOV/2), which means that the two formulas above
-    # are the same.
-    #
-    # Furthermore, by using the fact that tan() is an odd function again,
-    # we know that when camera angle_x < 0, we still get the same equations.
-    # So either of the above equations would work whenever camera_angle_x satisfies
-    # the condition that FOV/2 + abs(camera_angle_x) < 90 degrees.
-    #
-    # Conclusion (after a slight rearrangement):
-    # Assuming FOV/2 + abs(camera_angle_x) < 90 degrees, then
-    # horizontal_footprint = (tan(FOV/2+camera_angle_x) + tan(FOV/2-camera_angle_x)) * height
-
-    footprint_x = (math.tan(fov_x/2 + angle_x) + math.tan(fov_x/2 - angle_x)) * dataset_spec.height
-    footprint_y = (math.tan(fov_y/2 + angle_y) + math.tan(fov_y/2 - angle_y)) * dataset_spec.height
+    [footprint_x, footprint_y] = compute_image_footprint_on_surface_with_angle(camera, dataset_spec.height,
+                                                                               angle_x_deg, angle_y_deg)
 
     horizontal_distance = (1 - dataset_spec.overlap) * footprint_x
     vertical_distance = (1 - dataset_spec.sidelap) * footprint_y
@@ -99,16 +75,53 @@ def compute_speed_during_photo_capture(camera: Camera, dataset_spec: DatasetSpec
     return distance / time
 
 
+def compute_speed_during_photo_capture_with_angle(camera: Camera,
+                                                  dataset_spec: DatasetSpec,
+                                                  angle_x_deg: float = 0,
+                                                  angle_y_deg: float = 0,
+                                                  allowed_movement_px: float = 1,
+                                                  ) -> float:
+    """Compute the speed of drone during an active photo capture to prevent 
+    more than 1px of motion blur. This function accounts for non-zero camera angles,
+    but only one of the angles maybe non-zero.
+
+    Args:
+        camera (Camera): Camera model used for image capture.
+        dataset_spec (DatasetSpec): user specification for the dataset.
+        allowed_movement_px (float, optional): The maximum allowed movement in pixels. Defaults to 1 px.
+
+    Returns:
+        float: The speed at which the drone should move during photo capture, in meters per second.
+    """
+
+    # This function will help account for non-zero angle
+    footprint_coord = compute_image_footprint_on_surface_coord(camera,
+                                                               dataset_spec.height,
+                                                               angle_x_deg,
+                                                               angle_y_deg)
+    distance_to_footprint = closest_distance_to_footprint(footprint_coord)
+    
+    # distance travelled during active photo capture with angle
+    distance = compute_ground_sampling_distance(camera, distance_to_footprint) * allowed_movement_px
+
+    time = dataset_spec.exposure_time_ms * 0.001 # exposure time (seconds)
+    return distance / time
+
+
 def generate_photo_plan_on_grid(camera: Camera, 
                                 dataset_spec: DatasetSpec,
-                                angle_deg_x: float = 0,
-                                angle_deg_y: float = 0
+                                angle_x_deg: float = 0,
+                                angle_y_deg: float = 0,
+                                allowed_movement_px: float = 1,
                                 ) -> T.List[Waypoint]:
     """Generate the complete photo plan as a list of waypoints in a lawn-mower pattern.
 
     Args:
         camera (Camera): Camera model used for image capture.
         dataset_spec (DatasetSpec): user specification for the dataset.
+        angle_x_deg (float, optional): camera's gimbal angle toward the x direction (in degrees)
+        angle_y_deg (float, optional): camera's gimbal angle toward the y direction (in degrees)
+        allowed_movement_px (float, optional): The maximum allowed movement in pixels. Defaults to 1 px.
 
     Returns:
         List[Waypoint]: scan plan as a list of waypoints.
@@ -118,11 +131,17 @@ def generate_photo_plan_on_grid(camera: Camera,
     scan_dimension_y = dataset_spec.scan_dimension_y
 
     max_computed_distances = compute_distance_between_images_with_angle(camera, dataset_spec,
-                                                                            angle_deg_x,
-                                                                            angle_deg_y)
-
-    # assume allowed_movment_px = 1
-    computed_speed = compute_speed_during_photo_capture(camera, dataset_spec, allowed_movement_px=1)
+                                                                            angle_x_deg,
+                                                                            angle_y_deg)
+    # default allowed_movment_px = 1
+    if angle_x_deg == 0 and angle_y_deg == 0:
+        computed_speed = compute_speed_during_photo_capture(camera, dataset_spec, allowed_movement_px)
+    else:
+        computed_speed = compute_speed_during_photo_capture_with_angle(camera,
+                                                                       dataset_spec,
+                                                                       angle_x_deg=angle_x_deg,
+                                                                       angle_y_deg=angle_y_deg,
+                                                                       allowed_movement_px=allowed_movement_px)
 
     # calculate the number of photos in each direction
     # we need at least two waypoints in each direction at the start and end point of the scan area
@@ -134,8 +153,8 @@ def generate_photo_plan_on_grid(camera: Camera,
     distance_between_photos_y = scan_dimension_y / (num_y - 1)
 
     # Calculate adjustments of waypoints in x and y directions based on angles
-    adj_x = dataset_spec.height * math.tan(math.radians(angle_deg_x))
-    adj_y = dataset_spec.height * math.tan(math.radians(angle_deg_y))
+    adj_x = dataset_spec.height * math.tan(math.radians(angle_x_deg))
+    adj_y = dataset_spec.height * math.tan(math.radians(angle_y_deg))
 
     result: T.List[Waypoint] = []
     for j in range(0, num_y):
@@ -145,9 +164,9 @@ def generate_photo_plan_on_grid(camera: Camera,
             # use lawnmower pattern, so x travels in reverse direction if j is odd
             x = i * distance_between_photos_x if j%2==0 else (num_x - 1 - i) * distance_between_photos_x
             x -= adj_x # adjust x position based on camera gimbal angle x
-            waypoint = Waypoint(x=x,y=y,
+            waypoint = Waypoint(x=x, y=y, z=dataset_spec.height,
                                 speed=computed_speed, 
-                                camera_angle_x_deg=angle_deg_x, camera_angle_y_deg=angle_deg_y)
+                                camera_angle_x_deg=angle_x_deg, camera_angle_y_deg=angle_y_deg)
             result.append(waypoint)
 
     return result
@@ -221,12 +240,41 @@ def total_time_for_flightplan(flightplan: T.List[Waypoint],
         float: the total flight time (in seconds).
 
     """
-
     total_time = 0.0
     for i in range(1, len(flightplan)):
         # Calculate and accumulate time between consecutive waypoints
         time = time_between_waypoints(flightplan[i-1], flightplan[i],
                                       max_speed, max_acc)
         total_time += time
-
     return total_time
+
+
+def waypoint_count(flightplan: T.List[Waypoint]) -> tuple[int, int, int]:
+    """Count the number of total waypoints, number of waypoints per row, and total number of rows
+
+    Args:
+        flightplan (T.List[Waypoint]): A flightplan represented as a list of Waypoints.
+
+    Returns:
+        int: Total number of waypoints
+        int: Number of waypoints per row
+        int: Number of rows
+
+    """
+    n = len(flightplan) # Total number of waypoints
+    num_per_row = 0 # number of waypoints per row
+    num_rows = 0 # number of rows
+
+    # find number of waypoints in the first row
+    i = 0
+    for j in range(1, len(flightplan)):
+        if flightplan[j].x > flightplan[i].x:
+            i = j
+        else:
+            break
+    num_per_row = i + 1
+
+    # compute number rows
+    num_rows = math.ceil(n / num_per_row)
+
+    return n, num_per_row, num_rows
